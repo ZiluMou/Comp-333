@@ -1,0 +1,106 @@
+import pandas as pd
+rodent_df = pd.read_csv('test_portal-csv.csv')
+rodent_df['country']
+rodent_df['yr']
+import pandas as pd
+
+def assign_season(dataframe):
+    # Create a dictionary to map months to seasons
+    season_dict = {1: 'Winter', 2: 'Winter', 3: 'Spring', 4: 'Spring', 5: 'Spring', 6: 'Summer', 
+                   7: 'Summer', 8: 'Summer', 9: 'Fall', 10: 'Fall', 11: 'Fall', 12: 'Winter'}
+    
+    # Check the data type of the 'month' column
+    if dataframe['mo'].dtype == 'int64':
+        # Convert the 'month' column to a datetime format
+        dataframe['mo'] = pd.to_datetime(dataframe['mo'], format='%m')
+    
+    # Extract the month from the 'month' column
+    months = dataframe['mo'].dt.month
+    
+    # Map the months to seasons using the dictionary
+    seasons = months.map(season_dict)
+    
+    # Add the 'season' column to the DataFrame
+    dataframe['season'] = seasons
+    
+    dataframe = dataframe[dataframe['country'] != 'Ecuador']  #drop all records which are in 'Ecuador'in the country colum
+    
+    return dataframe
+
+
+
+
+
+rodent_modified = assign_season(rodent_df)
+rodent_modified
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import OneHotEncoder
+
+# Load the data
+
+
+
+# Drop the 'record_ID' column
+
+
+# Count the number of sightings for each combination of species, season, and country
+sightings = rodent_modified.groupby(['species', 'season', 'country']).size().reset_index(name='sightings')
+
+# Encode categorical variables as numerical variables using one-hot encoding
+encoder = OneHotEncoder(drop='first', sparse=False)
+encoded_species = encoder.fit_transform(sightings[['species']])
+encoded_season = encoder.fit_transform(sightings[['season']])
+encoded_country = encoder.fit_transform(sightings[['country']])
+encoded_data = pd.DataFrame({'species': encoded_species[:,0], 
+                             'season': encoded_season[:,0], 
+                             'country': encoded_country[:,0],
+                             'sightings': sightings['sightings']})
+
+# Split the data into training and testing sets
+train_data = encoded_data.sample(frac=0.8, random_state=42)
+test_data = encoded_data.drop(train_data.index)
+
+# Fit a linear regression model
+model = LinearRegression()
+model.fit(train_data[['species', 'season', 'country']], train_data['sightings'])
+
+# Evaluate the model on the testing set
+r2_score = model.score(test_data[['species', 'season', 'country']], test_data['sightings'])
+print('R-squared score:', r2_score)
+
+import pandas as pd
+
+#second case scenario, if Ecuador is considered as a Northern Hhemisphere Country. 
+
+
+def assign_season2(dataframe):
+    # Create a dictionary to map months to seasons
+    season_dict = {1: 'Winter', 2: 'Winter', 3: 'Spring', 4: 'Spring', 5: 'Spring', 6: 'Summer', 
+                   7: 'Summer', 8: 'Summer', 9: 'Fall', 10: 'Fall', 11: 'Fall', 12: 'Winter'}
+    
+    # Check the data type of the 'month' column
+    if dataframe['mo'].dtype == 'int64':
+        # Convert the 'month' column to a datetime format
+        dataframe['mo'] = pd.to_datetime(dataframe['mo'], format='%m')
+    
+    if (dataframe['country'] == 'Australia').any():
+        season_dict = {1: 'Summer', 2: 'Summer', 3: 'Summer', 4: 'Fall', 5: 'Fall', 6: 'Fall', 
+                   7: 'Winter', 8: 'Winter', 9: 'Winter', 10: 'Spring', 11: 'Spring', 12: 'Summer'}
+       
+    
+    # Extract the month from the 'month' column
+    months = dataframe['mo'].dt.month
+    
+    # Map the months to seasons using the dictionary
+    seasons = months.map(season_dict)
+    
+    # Add the 'season' column to the DataFrame
+    dataframe['season'] = seasons
+    
+   
+    
+    return dataframe
+
+assign_season2(rodent_df)
+
+rodent_df['country']  #update the csv where USA is cleaned 
